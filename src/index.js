@@ -264,7 +264,7 @@ client.on('interactionCreate', async (interaction) => {
                     },
                     {
                         name: "***Rules***",
-                        value: "1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#1128260763560198174>",
+                        value: "1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#channelid >",
                     },
                     {
                         name: "***Heist Ended***",
