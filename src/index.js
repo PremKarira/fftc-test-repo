@@ -251,6 +251,7 @@ client.on('interactionCreate', async (interaction) => {
                         .setDisabled(true),
                 );
             const cayoEmbedEnded = interaction.message.embeds[0]
+            
             timestampEnded = Math.floor(Date.now() / 1000);
             timestampEnded = `<t:${timestampEnded}:R>`
             const cayoEmbedEndedheist = new EmbedBuilder()
