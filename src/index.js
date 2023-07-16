@@ -89,7 +89,7 @@ client.on("messageCreate", async (message) => {
 
         const cayoEmbed = new EmbedBuilder()
             .setTitle("Cayo Perico Heist")
-            .setURL("https://discord.com/channels/1127974992500494407/1128260763560198174")
+            .setURL("https://discord.com/channels/904713062060265533/904713811318153287")
             .setDescription(`Cayo Perico Heist : ${timestamp}\nHost - SC: ${hostsc}\nCayo Perico Modded : 2.5m each`)
             .addFields(
                 {
@@ -255,7 +255,7 @@ client.on('interactionCreate', async (interaction) => {
             timestampEnded = `<t:${timestampEnded}:R>`
             const cayoEmbedEndedheist = new EmbedBuilder()
                 .setTitle("Cayo Perico Heist")
-                .setURL("https://discord.com/channels/1127974992500494407/1128260763560198174")
+                .setURL("https://discord.com/channels/904713062060265533/904713811318153287")
                 .setDescription(cayoEmbedEnded.description)
                 .addFields(
                     {
