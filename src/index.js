@@ -8,7 +8,7 @@ const { Events, ModalBuilder, TextInputBuilder, TextInputStyle } = require('disc
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-const modders = ["330632487812202498","428902961847205899", "284228925973069825", "555470991774711819", "380395559921385473", "512434038003335169"];
+const modders = ["381494035308871690","753602007025320026","330632487812202498","428902961847205899", "284228925973069825", "555470991774711819", "380395559921385473", "512434038003335169"];
 
 let joiners = []
 let host
