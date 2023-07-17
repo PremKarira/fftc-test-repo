@@ -62,7 +62,7 @@ client.on("ready", (x) => {
 });
 
 client.on("messageCreate", async (message) => {
-    if (message.content.startsWith("--cloneherefrom") && (message.author.id === `428902961847205899`)) {
+    if (message.content.startsWith("--cloneherefrom") && 0) {
         const { channel, content } = message
         let text = content.slice(16);
         const sourcee = text;
