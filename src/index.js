@@ -1,4 +1,4 @@
-require('dotenv').config();
+// require('dotenv').config();
 const mongo = require('./mongo');
 const scSchema = require('../schemas/sc');
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
@@ -251,7 +251,7 @@ client.on('interactionCreate', async (interaction) => {
                         .setDisabled(true),
                 );
             const cayoEmbedEnded = interaction.message.embeds[0]
-            
+
             timestampEnded = Math.floor(Date.now() / 1000);
             timestampEnded = `<t:${timestampEnded}:R>`
             const cayoEmbedEndedheist = new EmbedBuilder()

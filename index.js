@@ -1,4 +1,4 @@
-require('dotenv').config();
+// require('dotenv').config();
 const mongo = require('./mongo');
 const scSchema = require('../schemas/sc');
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
