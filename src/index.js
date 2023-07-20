@@ -1,13 +1,73 @@
 require('dotenv').config();
+// const keepAlive = require('./server');
 const mongo = require('./mongo');
 const scSchema = require('../schemas/sc');
 const modSchema = require('../schemas/mod');
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions, time } = require('discord.js');
 const { MessageActionRow, MessageButton, ActionRowBuilder } = require('discord.js');
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
 const { Events, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+const timestamps = [
+    // this contains timestamps of week July 10th - July 17th
+    { time: '1688947200', name: 'Numbspliff' },
+    { time: '1688976000', name: 'Yuki' },
+    { time: '1689015600', name: 'Wake' },
+    { time: '1689033600', name: 'Kami' },
+    { time: '1689066000', name: 'Matty' },
+    { time: '1689105600', name: 'Saeko' },
+    { time: '1689120000', name: 'Kami' },
+    { time: '1689148800', name: 'CoolGuy' },
+    { time: '1689177600', name: 'Prem' },
+    { time: '1689206400', name: 'Kami' },
+    { time: '1689238800', name: 'Jordy' },
+    { time: '1689278400', name: 'Numbspliff' },
+    { time: '1689300000', name: 'Yuki' },
+    { time: '1689328800', name: 'Dpitty' },
+    { time: '1689361200', name: 'Wake' },
+    { time: '1689379200', name: 'Matty' },
+    { time: '1689418800', name: 'Calllight' },
+    { time: '1689451200', name: 'Saeko' },
+    { time: '1689469200', name: 'Jordy' },
+    { time: '1689501600', name: 'Harlow' },
+    { time: '1689523200', name: 'Prem' },
+    // next week
+    { time: '1689552000', name: 'Numbspliff' },
+    { time: '1689580800', name: 'Yuki' },
+    { time: '1689620400', name: 'Wake' },
+    { time: '1689638400', name: 'Kami' },
+    { time: '1689670800', name: 'Matty' },
+    { time: '1689710400', name: 'Saeko' },
+    { time: '1689724800', name: 'Kami' },
+    { time: '1689753600', name: 'CoolGuy' },
+    { time: '1689782400', name: 'Prem' },
+    { time: '1689811200', name: 'Kami' },
+    { time: '1689843600', name: 'Jordy' },
+    { time: '1689883200', name: 'Numbspliff' },
+    { time: '1689904800', name: 'Yuki' },
+    { time: '1689933600', name: 'Dpitty' },
+    { time: '1689966000', name: 'Wake' },
+    { time: '1689984000', name: 'Matty' },
+    { time: '1690023600', name: 'Calllight' },
+    { time: '1690056000', name: 'Saeko' },
+    { time: '1690074000', name: 'Jordy' },
+    { time: '1690106400', name: 'Harlow' },
+    { time: '1690128000', name: 'Prem' }
+];
+
+function getNextThreeEvents() {
+    let weeksPassed=((Math.floor(Date.now() / 3600000)*3600) - timestamps[0].time)/(7 * 24 * 60 * 60);
+    console.log(Math.floor(Date.now() / 3600000)*3600)
+    for (const event of timestamps) {
+        event.time = Number(event.time) + (7 * 24 * 60 * 60 * Math.floor(weeksPassed));
+      }
+      const nextEvents = timestamps.filter((event) => Number(event.time) > Math.floor(Date.now() /1000));
+const nextThreeEvents = nextEvents.slice(0, 3);
+    return nextThreeEvents;
+  }
+
 
 let modders = []
 let joiners = []
@@ -18,8 +78,11 @@ let heistWebHook;
 async function start() {
     try {
         const mongoose = await mongo();
-        console.log('Connected to MongoDB');
-        client.login(process.env.TOKEN);
+        console.log('Connected to MongoDB vi');
+        // keepAlive()
+        const mySecret = process.env.TOKEN
+        client.login(process.env.TOKEN)
+
     } catch (error) {
         console.error('Error connecting to MongoDB:', error);
     }
@@ -52,7 +115,7 @@ async function getsc(discordId) {
 
 client.on("ready", (x) => {
     console.log(`${x.user.tag} is ready!`)
-    client.user.setActivity(`hi`);
+    client.user.setActivity(`Doing Heists`);
 
     const ping = new SlashCommandBuilder()
         .setName('ping')
@@ -62,7 +125,29 @@ client.on("ready", (x) => {
 });
 
 client.on("messageCreate", async (message) => {
-    if (message.content.startsWith("--cloneherefrom") && 0) {
+    if (message.content === '??nextheists') {
+        const nextThreeEvents = getNextThreeEvents();
+
+        if (nextThreeEvents.length === 0) {
+            message.channel.send('No upcoming events.');
+            return;
+        }
+        // console.log(nextThreeEvents)
+        const embed = new EmbedBuilder()
+            .setTitle('Next Three heists')
+            .setColor('#FF5733')
+            .addFields(
+                { name: nextThreeEvents[0].name, value: `<t:${nextThreeEvents[0].time}:R>` },
+                { name: '\u200B', value: '\u200B' },
+                { name: nextThreeEvents[1].name, value: `<t:${nextThreeEvents[1].time}:R>` },
+                { name: '\u200B', value: '\u200B' },
+                { name: nextThreeEvents[2].name, value: `<t:${nextThreeEvents[2].time}:R>` },
+                { name: '\u200B', value: '\u200B' },
+            )
+
+        message.channel.send({ embeds: [embed] });
+    }
+    if (message.content.startsWith("??cloneherefrom") && message.author.id === '428902961847205899') {
         const { channel, content } = message
         let text = content.slice(16);
         const sourcee = text;
@@ -188,13 +273,23 @@ client.on("messageCreate", async (message) => {
             channel.send('Please provide a valid channel ID');
         }
     };
-    if (message.content.startsWith('??addmodder') && modders.includes(message.author.id)) {
+    if (message.content.startsWith('??addmodder') && (message.author.id === '330632487812202498' || message.author.id === '428902961847205899')) {
         const args = message.content.split(' ');
         if (args.length !== 2) {
             return message.reply('Invalid command format. Please provide a valid Discord ID.');
         }
 
-        const discordId = args[1];
+
+        let discordId
+        if (args.length > 1) {
+            const mention = message.mentions.users.first();
+            if (mention) {
+                discordId = mention.id;
+            } else {
+                discordId = args[1];
+            }
+        }
+        // const discordId = args[1];
 
         try {
             const existingModder = await modSchema.findOne({ discordId });
@@ -212,11 +307,55 @@ client.on("messageCreate", async (message) => {
             await newModder.save();
 
             message.reply(`Modder with ID ${discordId} has been added to the database.`);
+
+            updateModders()
+            console.log(modders)
         } catch (error) {
             console.error('Error adding modder:', error);
             message.reply('An error occurred while adding the modder.');
         }
     }
+
+    if (message.content.startsWith('??removemodder') && (message.author.id === '330632487812202498' || message.author.id === '428902961847205899')) {
+        const args = message.content.split(' ');
+        if (args.length !== 2) {
+            return message.reply('Invalid command format. Please provide a valid Discord ID.');
+        }
+
+
+        let discordId
+        if (args.length > 1) {
+            const mention = message.mentions.users.first();
+            if (mention) {
+                discordId = mention.id;
+            } else {
+                discordId = args[1];
+            }
+        }
+        // const discordId = args[1];
+
+        try {
+            const existingModder = await modSchema.findOne({ discordId });
+
+            if (!existingModder) {
+                message.reply('The modder does not exist in the database.');
+            }
+            else {
+                await modSchema.findOneAndDelete({ discordId });
+
+                message.reply(`Modder with ID ${discordId} has been removed from the database.`);
+
+
+
+                updateModders()
+                console.log(modders)
+            }
+        } catch (error) {
+            console.error('Error removing modder:', error);
+            message.reply('An error occurred while removing the modder.');
+        }
+    }
+
 
     // Command to retrieve modders and update the array
     if (message.content.toLowerCase() === '??getmodders') {
@@ -235,6 +374,10 @@ client.on("messageCreate", async (message) => {
 
                 message.channel.send({ embeds: [embed] });
                 //   (`Modders Discord IDs: ${modderList}`, "allowedMentions": { "parse" : []});
+
+
+                updateModders()
+                console.log(modders)
             } else {
                 message.channel.send('No modders found in the database.');
             }
@@ -244,6 +387,34 @@ client.on("messageCreate", async (message) => {
         }
     }
 
+
+    if (message.content.toLowerCase().startsWith("??getsc")) {
+        const args = message.content.split(" ");
+        let targetId = message.author.id;
+
+        if (args.length > 1) {
+            const mention = message.mentions.users.first();
+            if (mention) {
+                targetId = mention.id;
+            } else {
+                targetId = args[1];
+            }
+        }
+
+        try {
+            const doc = await scSchema.findOne({ discordId: targetId });
+
+            if (doc) {
+                const scUsername = doc.scUsername;
+                message.channel.send(`Social Club username: ${scUsername}`);
+            } else {
+                message.channel.send("Social Club username not found.");
+            }
+        } catch (error) {
+            console.error("Error retrieving Social Club username:", error);
+            message.channel.send("An error occurred while retrieving the Social Club username.");
+        }
+    }
 
     if (message.content.toLowerCase() === "??sc" && modders.includes(message.author.id)) {
         message.delete();
@@ -260,6 +431,24 @@ client.on("messageCreate", async (message) => {
                     .setStyle(ButtonStyle.Secondary),
             );
         message.channel.send({ embeds: [scEmbed], components: [scRow] });
+    }
+    if (message.content.toLowerCase().startsWith("??ts") && modders.includes(message.author.id)) {
+        try {
+            let param = message.content.replace('??ts ', '')
+            param = param.split(' ')
+            if (param.length < 1) {
+                throw new Error('Invalid number of arguments.');
+            }
+            let timeleft = param[0]
+            timeleft = timeleft * 60
+            let timestamp = Math.floor(Date.now() / 1000);
+            timestamp = timestamp + timeleft
+            timestamp = `<t:${timestamp}:R>`
+            message.channel.send(timestamp);
+        } catch (error) {
+            console.error('Error executing ??ts command:', error);
+            message.channel.send('An error occurred while executing the ??ts command.');
+        }
     }
     if (message.content.toLowerCase().startsWith("??startcayo") && modders.includes(message.author.id)) {
         joiners = []
@@ -283,16 +472,16 @@ client.on("messageCreate", async (message) => {
 
         const cayoEmbed = new EmbedBuilder()
             .setTitle("Cayo Perico Heist")
-            .setURL("https://discord.com/channels/904713062060265533/904713811318153287")
-            .setDescription(`Cayo Perico Heist : ${timestamp}\nHost - SC: ${hostsc}\nCayo Perico Modded : 2.5m each`)
+            // .setURL("")
+            .setDescription(`Cayo Perico Heist : ${timestamp}\nHost - SC: ${hostsc}\nCayo Perico Modded : 2.5m each \n \u200b`)
             .addFields(
                 {
                     name: "***Steps to join heist***",
-                    value: "1. Click set sc button to set your social club in our database.\n2. Click join heist button to join the heist.\n3. Patiently wait for your turn. [FCFS]",
+                    value: `1. Click set sc button to set your social club in our database.\n2. Click join heist button to join the heist.\n3. Patiently wait for your turn. [FCFS] \n \u200b`,
                 },
                 {
                     name: "***Rules***",
-                    value: "1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#channelid >",
+                    value: `1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#1130802655799808052> \n \u200b`,
                 },
             )
             // .setImage("https://cubedhuang.com/images/alex-knight-unsplash.webp")
@@ -324,9 +513,9 @@ client.on("messageCreate", async (message) => {
         //     );
         joiners = []
         const sentMessage = await message.channel.send({
-            content: `Hello <@&1130126795837022302>, <@${host}> will be hosting this heist`,
+            content: `Hello <@&1130802480456933436>, <@${host}> will be hosting this heist`,
             embeds: [cayoEmbed],
-            components: [cayoRow]
+            // components: [cayoRow]
         });
         const heistThreadPromise = sentMessage.startThread({
             name: `Heist joiners list`,
@@ -382,6 +571,61 @@ client.on("messageCreate", async (message) => {
         }
 
     }
+    if (message.content.toLowerCase() === '??help') {
+        const embed = new EmbedBuilder()
+            // .setAuthor({
+            //     name: "Info",
+            //     url: "https://example.com",
+            // })
+            .setTitle("Available Commands")
+            .setDescription("Here are the available commands:")
+            .addFields(
+                {
+                    name: "/ping",
+                    value: `Check the bot\\'s latency \n \u200b`,
+                },
+                {
+                    name: "??getsc [Discord ID or mention someone]",
+                    value: `Get the Social Club username for a user  \n \u200b`,
+                },
+                {
+                    name: "??sc",
+                    value: `(modders' only command)\nCreate embed for other users to fill in their social club  \n \u200b`,
+                },
+                {
+                    name: "??getmodders",
+                    value: `Shows the list of all modders  \n \u200b`,
+                },
+                {
+                    name: "??addmodder [Discord ID or mention someone]",
+                    value: `Adds a modder through their discord ID in our database\nCan only be used by <@330632487812202498> for now \n \u200b`,
+                },
+                {
+                    name: "??removemodder [Discord ID or mention someone]",
+                    value: `Removes a modder through their discord ID in our database\nCan only be used by <@330632487812202498> for now \n \u200b`,
+                },
+                {
+                    name: "??startcayo [Time left (in minutes)]",
+                    value: `(modders' only command)\nGenerates embed for Cayo Perico Heist with ping.\nAdds 3 buttons: Join Heist, Set SC, End Heist.\nEnd Heist can only done by host who started this heist \n \u200b`,
+                },
+                {
+                    name: "??ts [Time left (in minutes)]",
+                    value: `(modders' only command)\nCheck timestamp working or not for Cayo Perico heist \n \u200b`,
+                },
+            )
+            // .setImage("https://cubedhuang.com/images/alex-knight-unsplash.webp")
+            // .setThumbnail("https://dan.onl/images/emptysong.jpg")
+            .setColor("#00b0f4")
+            .setFooter({
+                text: "FFTC",
+                // iconURL: "https://slate.dan.onl/slate.png",
+            })
+            .setTimestamp();
+
+        await message.reply({ embeds: [embed] });
+    }
+
+
 });
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isModalSubmit() && interaction.customId === 'scModal') {
@@ -478,20 +722,20 @@ client.on('interactionCreate', async (interaction) => {
             timestampEnded = `<t:${timestampEnded}:R>`
             const cayoEmbedEndedheist = new EmbedBuilder()
                 .setTitle("Cayo Perico Heist")
-                .setURL("https://discord.com/channels/904713062060265533/904713811318153287")
+                // .setURL("")
                 .setDescription(cayoEmbedEnded.description)
                 .addFields(
                     {
                         name: "***Steps to join heist***",
-                        value: "1. Click set sc button to set your social club in our database.\n2. Click join heist button to join the heist.\n3. Patiently wait for your turn. [FCFS]",
+                        value: `1. Click set sc button to set your social club in our database.\n2. Click join heist button to join the heist.\n3. Patiently wait for your turn. [FCFS] \n \u200b`,
                     },
                     {
                         name: "***Rules***",
-                        value: "1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#channelid >",
+                        value: `1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#1130802655799808052> \n \u200b`,
                     },
                     {
                         name: "***Heist Ended***",
-                        value: `Heist ended : ${timestampEnded} \nNumber of heist joiners in this session : ${joiners.length} \nThanks for joining in`,
+                        value: `Heist ended : ${timestampEnded} \nNumber of heist joiners in this session : ${joiners.length} \nThanks for joining in \n \u200b`,
 
                     },
                 )
@@ -509,7 +753,20 @@ client.on('interactionCreate', async (interaction) => {
                 embeds: [cayoEmbedEndedheist],
                 components: [cayoRowDisabled]
             });
+            const thanksEmbed = new EmbedBuilder()
+                .setAuthor({
+                    name: "FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                })
+                .setTitle("Thanks for joining!")
+                .setDescription("The current hoster has finished for the session. He will complete remaining heists until everyone reacted has been finished. No other reacts will be counted to be done. Positive things from all of you everday motivates us to do this everyday! The next Host will be in a couple hours stay tuned! If you want more then the one, <#1130802641971191818> are always available.\n\nThank you from FFTC Modder Team")
+                .setColor("#b30000")
+                .setFooter({
+                    text: "Brought to you by FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                });
 
+            await interaction.channel.send({ embeds: [thanksEmbed] });
 
             const webhooks = await interaction.channel.fetchWebhooks();
             const found = webhooks.find(element => element.name.toLowerCase() === 'fftc');
@@ -532,7 +789,8 @@ client.on('interactionCreate', async (interaction) => {
                 threadId: heistThreadId,
             });
             // Retrieve the thread channel
-            const threadChannel = await interaction.guild.channels.fetch(heistThreadId);
+            let threadChannel = await interaction.guild.channels.fetch(heistThreadId);
+            await threadChannel.setArchived(true);
 
             // Close and lock the thread
             // await threadChannel.setLocked(true);
@@ -551,9 +809,10 @@ client.on('interactionCreate', async (interaction) => {
         const webhooks = await interaction.channel.fetchWebhooks();
         const found = webhooks.find(element => element.name.toLowerCase() === 'fftc');
         if (found) {
+
             heistWebHook = found;
         } else {
-            interaction.channel.createWebhook({
+            await interaction.channel.createWebhook({
                 name: 'FFTC',
                 avatar: 'https://media.istockphoto.com/id/1127235507/video/circular-interface-hud-design-infographic-elements-like-music-equalizer-audio-waves-or-sound.jpg?s=640x640&k=20&c=Fz18UW2MpatgZlYbUDy6OX9fEZjuuwfedKCfcjWrbEQ='
             })
@@ -608,3 +867,7 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 })
+
+// keepAlive()
+// const mySecret = process.env['TOKEN']
+// client.login(mySecret)
