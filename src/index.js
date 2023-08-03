@@ -125,7 +125,7 @@ client.on("ready", (x) => {
 });
 
 client.on("messageCreate", async (message) => {
-    if (message.content.startsWith('!editThumbnail') && message.author.id === '428902961847205899') {
+    if (message.content.startsWith('??editThumbnail') && message.author.id === '428902961847205899') {
         const repliedMessage = message.reference?.messageId
           ? await message.channel.messages.fetch(message.reference.messageId)
           : null;
