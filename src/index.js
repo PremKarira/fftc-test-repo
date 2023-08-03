@@ -125,6 +125,26 @@ client.on("ready", (x) => {
 });
 
 client.on("messageCreate", async (message) => {
+    if (message.content.startsWith('!editThumbnail') && message.author.id === '428902961847205899') {
+        const repliedMessage = message.reference?.messageId
+          ? await message.channel.messages.fetch(message.reference.messageId)
+          : null;
+        const existingEmbed = repliedMessage.embeds[0];
+        if (!existingEmbed) {
+          return message.reply('The replied message does not have an embed!');
+        }
+        console.log(existingEmbed)
+        existingEmbed.data.thumbnail = {
+            width :128,
+            height :128,
+            proxy_url: `https://images-ext-1.discordapp.net/external/zlAX06vJk-mshkAc7haIpAahfrlhPn3-A1uQS2ivn2U/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/853523258939015169/a_6d21a723a5ee3e402968fd21b5868815.gif`,
+            url: 'https://cdn.discordapp.com/avatars/853523258939015169/a_6d21a723a5ee3e402968fd21b5868815.gif?size=1024', 
+        };
+        repliedMessage.edit({
+          embeds: [existingEmbed],
+        });
+        return ;
+      }
     if (message.content === '??nextheists') {
         const nextThreeEvents = getNextThreeEvents();
 
