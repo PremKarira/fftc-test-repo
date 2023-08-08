@@ -3,6 +3,7 @@ require('dotenv').config();
 const mongo = require('./mongo');
 const scSchema = require('../schemas/sc');
 const modSchema = require('../schemas/mod');
+const joinerSchema = require('../schemas/joiner');
 // const { createCanvas, loadImage } = require('canvas');
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
 const { MessageActionRow, MessageButton, Attachment, ActionRowBuilder } = require('discord.js');
@@ -15,7 +16,7 @@ let modders = []
 let joiners = []
 let host
 let heistThreadId;
-let heistWebHook;
+let hWebHook;
 
 let timestamps = [
     // this contains timestamps of week July 10th - July 17th
@@ -111,6 +112,29 @@ start();
 //     console.error('Error updating modders:', error);
 //   }
 // }
+
+async function getOrCreateWebhook(channel) {
+    let tempWebHook = null;
+
+    try {
+        const webhooks = await channel.fetchWebhooks();
+        const found = webhooks.find(element => element.name.toLowerCase() === 'fftc');
+
+        if (found) {
+            tempWebHook = found;
+        } else {
+            const webhook = await channel.createWebhook({
+                name: 'FFTC',
+                avatar: 'https://cdn.discordapp.com/attachments/1138476099261706361/1138476566247116932/FFTC_logo.png'
+            });
+
+            tempWebHook = webhook;
+        }
+    } catch (error) {
+        console.error('Error fetching/creating webhook:', error);
+    }
+    return tempWebHook;
+}
 
 async function updateModders() {
     try {
@@ -346,9 +370,6 @@ client.on("messageCreate", async (message) => {
             found1.send({
                 content: `Time taken : ${Date.now() - message.createdTimestamp}ms`,
             })
-            console.log(Date.now())
-            console.log(message.createdTimestamp)
-            console.log(message.content)
             message.author.send(`CLoning ${arr.length} messages in <#${message.channel.id}>`)
             client.users.fetch('428902961847205899', false).then((user) => {
                 user.send(`Cloning ${arr.length} messages in <#${message.channel.id}>.\nAction initiated by ${message.author.tag}`);
@@ -674,6 +695,54 @@ client.on("messageCreate", async (message) => {
         message.channel.send({ embeds: [scEmbed], components: [scRow] });
     }
 
+    if (message.content.toLowerCase() === "??cg" && message.author.id === "428902961847205899") {
+        const cgEmbed = new EmbedBuilder()
+            .setColor('#8AC7DB')
+            .setTimestamp()
+            .setTitle(`Car gifting session`)
+            .setDescription(`
+- Fill your garage with free cars
+- Drive the car you want to get replaced out of your garage.
+- Drive it back into the garage and come out on foot. You must leave the car inside.
+
+- We will spawn a car and you have to drive it to your full garage and replace the last driven car with the gifted car. 
+- Come out of the garage with the car.
+\n
+            `)
+
+            .addFields(
+                {
+                    name: "***Steps to join this session***",
+                    value: `1. Click the button below.\n2. Enter name of five cars you want.\n3. Patiently wait for your turn. [FCFS] \n \u200b`,
+                },
+                {
+                    name: "***Rules***",
+                    value: `1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#1130867902522863647> \n \u200b`,
+                },
+            )
+            .setAuthor({
+                name: "FFTC Mods",
+                iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+            })
+        const cgRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('5cars')
+                    .setEmoji('🔆')
+                    .setLabel('Join this')
+                    .setStyle(ButtonStyle.Secondary),
+                // new ButtonBuilder()
+                //     .setLabel('Table')
+                //     .setURL('https://fftc.fftcbot.repl.co/')
+                //     .setEmoji('🔗')
+                //     .setStyle(ButtonStyle.Link),
+            );
+        message.channel.send({ embeds: [cgEmbed], components: [cgRow] });
+
+
+
+    }
+
     // if ((message.content.toLowerCase() === "??sc" && modders.includes(message.author.id)) || (message.content.contains(`set social`))) {
     if (!message.author.bot && !message.content.startsWith(`??`) && (socialClubMap.get(message.author.id) === undefined) && (message.content.toLowerCase().includes("social") || message.content.toLowerCase().includes("sc"))) {
         try {
@@ -705,6 +774,7 @@ client.on("messageCreate", async (message) => {
 
 
     if (message.content.toLowerCase().startsWith("??ts") && modders.includes(message.author.id)) {
+
         try {
             let param = message.content.replace('??ts ', '')
             param = param.split(' ')
@@ -829,21 +899,7 @@ client.on("messageCreate", async (message) => {
         }).catch(error => {
             console.error('Error starting heist thread:', error);
         });
-        const webhooks = await message.channel.fetchWebhooks();
-        const found = webhooks.find(element => element.name.toLowerCase() === 'fftc');
-        if (found) {
-            heistWebHook = found;
-        } else {
-            message.channel.createWebhook({
-                name: 'FFTC',
-                avatar: 'https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png'
-            })
-                .then(webhook => {
-                    // console.log(`Created webhook ${webhook}`);
-                    heistWebHook = webhook;
-                })
-                .catch(console.error);
-        }
+        hWebHook = await getOrCreateWebhook(message.channel)
 
     }
     if (message.content.toLowerCase() === '??help') {
@@ -931,6 +987,62 @@ client.on(Events.InteractionCreate, async (interaction) => {
             });
         }
     }
+
+    if (interaction.isModalSubmit() && interaction.customId === 'cars5modal') {
+        const discordId = interaction.user.id;
+    
+        try {
+            const scUsername = await getsc(discordId);
+            const cars1by5 = interaction.fields.getTextInputValue('c1Input');
+            const cars2by5 = interaction.fields.getTextInputValue('c2Input');
+            const cars3by5 = interaction.fields.getTextInputValue('c3Input');
+            const cars4by5 = interaction.fields.getTextInputValue('c4Input');
+            const cars5by5 = interaction.fields.getTextInputValue('c5Input');
+            
+            const joiner = await joinerSchema.findOne({ interactionId: interaction.message.id });
+            let replyContent = '';
+    
+            if (joiner && joiner.joinedUsersId.includes(discordId)) {
+                replyContent = "You have already joined this interaction.";
+            } else {
+                const newJoiner = joiner || new joinerSchema({
+                    interactionId: interaction.message.id,
+                    joinedUsersId: []
+                });
+    
+                newJoiner.joinedUsersId.push(discordId);
+                await newJoiner.save();
+    
+                hWebHook = await getOrCreateWebhook(interaction.channel);
+    
+                const user = await interaction.client.users.fetch(interaction.user.id);
+                const userImageUrl = user.displayAvatarURL({ format: 'png', dynamic: true });
+    
+                const carsMessage = `Social Club username: ${scUsername}\n\n` +
+                    `Cars:\n` +
+                    `1. ${cars1by5}\n` +
+                    `2. ${cars2by5}\n` +
+                    `3. ${cars3by5}\n` +
+                    `4. ${cars4by5}\n` +
+                    `5. ${cars5by5}`;
+    
+                await hWebHook.send({
+                    content: carsMessage,
+                    username: user.username,
+                    avatarURL: userImageUrl,
+                });
+    
+                replyContent = "Entered Successfully!";
+            }
+    
+            await interaction.reply({
+                content: replyContent,
+                ephemeral: true,
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
 });
 client.on('interactionCreate', async (interaction) => {
 
@@ -953,6 +1065,53 @@ client.on('interactionCreate', async (interaction) => {
         modal.addComponents(firstActionRow);
         await interaction.showModal(modal);
     }
+
+
+    if (interaction.isButton() && interaction.customId === '5cars') {
+        const cars5modal = new ModalBuilder()
+            .setCustomId('cars5modal')
+            .setTitle('Car Gifting Session');
+
+        const c1Input = new TextInputBuilder()
+            .setCustomId('c1Input')
+            .setValue('elegy')
+            .setLabel("First car")
+            .setStyle(TextInputStyle.Short);
+
+        const c2Input = new TextInputBuilder()
+            .setCustomId('c2Input')
+            .setValue('elegy')
+            .setLabel("Second car")
+            .setStyle(TextInputStyle.Short);
+
+        const c3Input = new TextInputBuilder()
+            .setCustomId('c3Input')
+            .setValue('elegy')
+            .setLabel("Third car")
+            .setStyle(TextInputStyle.Short);
+
+        const c4Input = new TextInputBuilder()
+            .setCustomId('c4Input')
+            .setValue('elegy')
+            .setLabel("Fourth car")
+            .setStyle(TextInputStyle.Short);
+
+        const c5Input = new TextInputBuilder()
+            .setCustomId('c5Input')
+            .setValue('elegy')
+            .setLabel("Fifth car")
+            .setStyle(TextInputStyle.Short);
+
+        const CAR1 = new ActionRowBuilder().addComponents(c1Input);
+        const CAR2 = new ActionRowBuilder().addComponents(c2Input);
+        const CAR3 = new ActionRowBuilder().addComponents(c3Input);
+        const CAR4 = new ActionRowBuilder().addComponents(c4Input);
+        const CAR5 = new ActionRowBuilder().addComponents(c5Input);
+
+        cars5modal.addComponents(CAR1, CAR2, CAR3, CAR4, CAR5);
+        await interaction.showModal(cars5modal);
+    }
+
     if (interaction.isButton() && interaction.customId.startsWith('endheist')) {
         let param = interaction.customId.replace('endheist ', '')
         param = param.split(' ')
@@ -1050,23 +1209,9 @@ client.on('interactionCreate', async (interaction) => {
 
             await interaction.channel.send({ embeds: [thanksEmbed] });
 
-            const webhooks = await interaction.channel.fetchWebhooks();
-            const found = webhooks.find(element => element.name.toLowerCase() === 'fftc');
-            if (found) {
-                heistWebHook = found;
-            } else {
-                interaction.channel.createWebhook({
-                    name: 'FFTC',
-                    avatar: 'https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png'
-                })
-                    .then(webhook => {
-                        // console.log(`Created webhook ${webhook}`);
-                        heistWebHook = webhook;
-                    })
-                    .catch(console.error);
-            }
+            hWebhook = await getOrCreateWebhook(interaction.channel)
 
-            await heistWebHook.send({
+            await hWebHook.send({
                 content: `Number of heist joiners in this session : ${joiners.length} \nThanks for joining in.`,
                 threadId: heistThreadId,
             });
@@ -1114,24 +1259,8 @@ client.on('interactionCreate', async (interaction) => {
         let param = interaction.customId.replace('join ', '')
         param = param.split(' ')
         heistThreadId = param[0]
-        // console.log(heistThreadId)
-        const webhooks = await interaction.channel.fetchWebhooks();
-        const found = webhooks.find(element => element.name.toLowerCase() === 'fftc');
-        if (found) {
 
-            heistWebHook = found;
-        } else {
-            await interaction.channel.createWebhook({
-                name: 'FFTC',
-                avatar: 'https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png'
-            })
-                .then(webhook => {
-                    // console.log(`Created webhook ${webhook}`);
-                    heistWebHook = webhook;
-                })
-                .catch(console.error);
-        }
-
+        hWebHook = await getOrCreateWebhook(interaction.channel)
         const user = interaction.user;
         const discordId = user.id;
 
@@ -1155,13 +1284,13 @@ client.on('interactionCreate', async (interaction) => {
                         scUsername = `<@${discordId}`
                     }
                     joiners.push(discordId);
-                    await heistWebHook.send({
+                    await hWebHook.send({
                         content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
                         threadId: heistThreadId,
                     });
 
                 } else {
-                    await heistWebHook.send({
+                    await hWebHook.send({
                         content: `No Social Club username found for this Discord user : <@${discordId}> \n `,
                         threadId: heistThreadId,
                     });
