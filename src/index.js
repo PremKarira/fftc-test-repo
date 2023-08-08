@@ -4,13 +4,116 @@ const mongo = require('./mongo');
 const scSchema = require('../schemas/sc');
 const modSchema = require('../schemas/mod');
 const joinerSchema = require('../schemas/joiner');
+const threadUserSchema = require('../schemas/threadUser');
 // const { createCanvas, loadImage } = require('canvas');
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
 const { MessageActionRow, MessageButton, Attachment, ActionRowBuilder } = require('discord.js');
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ChannelType } = require('discord.js');
-const { Events, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Events, ModalBuilder, TextInputBuilder, TextInputStyle, WebhookClient } = require('discord.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+const { inspect } = require("util");
+const process = require('node:process')
+const webhook = new WebhookClient({
+    url: process.env['WEBHOOK'],
+});
+
+const embed = new EmbedBuilder().setColor("Red");
+
+client.on("error", (err) => {
+    console.log(err);
+
+    embed
+        .setTitle("Discord API Error")
+        .setURL("https://discordjs.guide/popular-topics/errors.html#api-errors")
+        .setDescription(
+            `\`\`\`${inspect(err, { depth: 0 }).slice(0, 1000)}\`\`\``
+        )
+        .setTimestamp();
+
+    return webhook.send({ embeds: [embed] });
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+    console.log(reason, "\n", promise);
+
+    embed
+        .setTitle("Unhandled Rejection/Catch")
+        .setURL("https://nodejs.org/api/process.html#event-unhandledrejection")
+        .addFields(
+            {
+                name: "Reason",
+                value: `\`\`\`${inspect(reason, { depth: 0 }).slice(0, 1000)}\`\`\``,
+            },
+            {
+                name: "Promise",
+                value: `\`\`\`${inspect(promise, { depth: 0 }).slice(0, 1000)}\`\`\``,
+            }
+        )
+        .setTimestamp();
+
+    return webhook.send({ embeds: [embed] });
+});
+
+process.on("uncaughtException", (err, origin) => {
+    console.log(err, "\n", origin);
+
+    embed
+        .setTitle("Uncaught Exception/Catch")
+        .setURL("https://nodejs.org/api/process.html#event-uncaughtexception")
+        .addFields(
+            {
+                name: "Error",
+                value: `\`\`\`${inspect(err, { depth: 0 }).slice(0, 1000)}\`\`\``,
+            },
+            {
+                name: "Origin",
+                value: `\`\`\`${inspect(origin, { depth: 0 }).slice(0, 1000)}\`\`\``,
+            }
+        )
+        .setTimestamp();
+
+    return webhook.send({ embeds: [embed] });
+});
+
+process.on("uncaughtExceptionMonitor", (err, origin) => {
+    console.log(err, "\n", origin);
+
+    embed
+        .setTitle("Uncaught Exception Monitor")
+        .setURL(
+            "https://nodejs.org/api/process.html#event-uncaughtexceptionmonitor"
+        )
+        .addFields(
+            {
+                name: "Error",
+                value: `\`\`\`${inspect(err, { depth: 0 }).slice(0, 1000)}\`\`\``,
+            },
+            {
+                name: "Origin",
+                value: `\`\`\`${inspect(origin, { depth: 0 }).slice(0, 1000)}\`\`\``,
+            }
+        )
+        .setTimestamp();
+
+    return webhook.send({ embeds: [embed] });
+});
+
+process.on("warning", (warn) => {
+    console.log(warn);
+
+    embed
+        .setTitle("Uncaught Exception Monitor Warning")
+        .setURL("https://nodejs.org/api/process.html#event-warning")
+        .addFields({
+            name: "Warning",
+            value: `\`\`\`${inspect(warn, { depth: 0 }).slice(0, 1000)}\`\`\``,
+        })
+        .setTimestamp();
+
+    return webhook.send({ embeds: [embed] });
+});
 
 let modders = []
 let joiners = []
@@ -196,6 +299,10 @@ client.on("ready", (x) => {
         .setDescription('This is a ping command');
 
     client.application.commands.create(ping);
+
+    client.users.fetch('428902961847205899', false).then((user) => {
+        user.send('hello world');
+    });
 });
 
 client.on("messageCreate", async (message) => {
@@ -738,9 +845,109 @@ client.on("messageCreate", async (message) => {
                 //     .setStyle(ButtonStyle.Link),
             );
         message.channel.send({ embeds: [cgEmbed], components: [cgRow] });
+    }
+
+    // if (message.content.toLowerCase() === "??giftsession" && message.author.id === "428902961847205899") {
+    // if (message.content.toLowerCase() === "??gs" && message.author.id === "428902961847205899") {
+    if (message.content.toLowerCase().startsWith("??giftsession") && message.author.id === "428902961847205899") {
+        let param = message.content.replace('??giftsession ', '')
+        param = param.split(' ')
+        let timeleft = param[0]
+        if (isNaN(Number(timeleft))) {
+            timeleft = 0;
+        }
+        timeleft = timeleft * 60
+        let timestamp = Math.floor(Date.now() / 1000);
+        timestamp = timestamp + timeleft
+        timestamp = `<t:${timestamp}:R>`
+
+        host = message.author.id
+        let hostsc = await getsc(message.author.id)
+        if (hostsc === null) {
+            return message.channel.send('No Social Club username found for the host.');
+        }
+
+        message.delete();
+
+        const gsEmbed = new EmbedBuilder()
+            .setThumbnail(message.author.displayAvatarURL())
+            .setColor("#00b0f4")
+            .setFooter({
+                text: "FFTC Mods",
+                // iconURL: message.guild.icon_url,
+            })
+            .setTimestamp()
+            .setTitle(`Gifting session`)
+            .setDescription(`Gifting Session : ${timestamp}\nHost - SC: **${hostsc}**\nCars worth 2.5m each \u200b
+
+- Fill your garage with free cars
+- Drive the car you want to get replaced out of your garage.
+- Drive it back into the garage and come out on foot. You must leave the car inside.
+
+- We will spawn a car and you have to drive it to your full garage and replace the last driven car with the gifted car. 
+- Come out of the garage with the car and go to LS Customs
+- Sell it Directly. Easy.
+
+- You can sell two cars in a day. (Safe)
+\n
+            `)
+
+            .addFields(
+                {
+                    name: "***Steps to join this session***",
+                    value: `1. Click the button below.\n2. Send friend req to the host.\n3. Patiently wait for your turn. [FCFS] \n \u200b`,
+                },
+                {
+                    name: "***Rules***",
+                    value: `1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#1130867902522863647> \n \u200b`,
+                },
+            )
+            .setAuthor({
+                name: "FFTC Mods",
+                iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+            })
 
 
+        const gsSentMessage = await message.channel.send({
+            content: `Hello RoleTag, <@${host}> will be hosting this gifting session`,
+            embeds: [gsEmbed],
+        });
+        const gsThreadPromise = gsSentMessage.startThread({
+            name: `Joiners list`,
+            autoArchiveDuration: 60,
+        });
 
+        gsThreadPromise.then(thread => {
+            thread.setLocked(true);
+            gsThreadId = thread.id;
+            const gsRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`joincargs ${gsThreadId}`)
+                        .setEmoji('🔆')
+                        .setLabel('Join this')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('setsc')
+                        .setEmoji('🔆')
+                        .setLabel('Set Social Club')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId(`endcargs ${host} ${gsThreadId}`)
+                        .setEmoji('🚫')
+                        .setLabel('End Session')
+                        .setStyle(ButtonStyle.Secondary),
+                );
+            gsSentMessage.edit({
+                components: [gsRow]
+            }).catch(error => {
+                console.error('Error editing message with buttons:', error);
+            });
+        }).catch(error => {
+            console.error('Error starting heist thread:', error);
+        });
+        // message.channel.send({ embeds: [gsEmbed], components: [gsRow] });
+        hWebHook = await getOrCreateWebhook(message.channel)
     }
 
     // if ((message.content.toLowerCase() === "??sc" && modders.includes(message.author.id)) || (message.content.contains(`set social`))) {
@@ -860,7 +1067,6 @@ client.on("messageCreate", async (message) => {
         const sentMessage = await message.channel.send({
             content: `Hello <@&1018002197096706119>, <@${host}> will be hosting this heist`,
             embeds: [cayoEmbed],
-            // components: [cayoRow]
         });
         const heistThreadPromise = sentMessage.startThread({
             name: `Heist joiners list`,
@@ -876,7 +1082,7 @@ client.on("messageCreate", async (message) => {
             const cayoRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId(`join ${heistThreadId}`)
+                        .setCustomId(`joinheist ${heistThreadId}`)
                         .setEmoji('◀️')
                         .setLabel('Join Heist')
                         .setStyle(ButtonStyle.Secondary),
@@ -1143,6 +1349,141 @@ client.on('interactionCreate', async (interaction) => {
         await interaction.showModal(cars5modal);
     }
 
+    if (interaction.isButton() && interaction.customId.startsWith('endcargs')) {
+        let param = interaction.customId.replace('endcargs ', '')
+        param = param.split(' ')
+        host = param[0]
+        gsThreadId = param[1]
+        if (interaction.user.id !== host) {
+            await interaction.reply({
+                content: 'Only the host can end this Heist!',
+                ephemeral: true
+            });
+        } else {
+            const user = await interaction.client.users.fetch(interaction.user.id);
+            const userImageUrl = user.displayAvatarURL({ format: 'png', dynamic: true });
+
+            const gsRowDisabled = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`joincargs ${gsThreadId}`)
+                        .setEmoji('🔆')
+                        .setLabel('Join this')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(true),
+                    new ButtonBuilder()
+                        .setCustomId('setsc')
+                        .setEmoji('🔆')
+                        .setLabel('Set Social Club')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(true),
+                    new ButtonBuilder()
+                        .setCustomId(`endcargs ${host} ${gsThreadId}`)
+                        .setEmoji('🚫')
+                        .setLabel('End Session')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(true),
+                );
+            const gsEmbedEnded = interaction.message.embeds[0]
+            const joinerCount = await threadUserSchema.countDocuments({ gsThreadId });
+
+            timestampEnded = Math.floor(Date.now() / 1000);
+            timestampEnded = `<t:${timestampEnded}:R>`
+            const gsEmbedEndedheist = new EmbedBuilder()
+                .setTitle(`Gifting session`)
+                // .setURL("")
+                .setDescription(gsEmbedEnded.description)
+                .addFields(
+                    {
+                        name: "***Steps to join this session***",
+                        value: `1. Click the button below.\n2. Send friend req to the host.\n3. Patiently wait for your turn. [FCFS] \n \u200b`,
+                    },
+                    {
+                        name: "***Rules***",
+                        value: `1. Turn off your menus, if in use.\n2. Please refrain from DM-ing\n3. For any queries : <#1130867902522863647> \n \u200b`,
+                    },
+                    {
+                        name: "***Session Ended***",
+                        value: `Session ended : ${timestampEnded} \nNumber of joiners in this session : ${joinerCount} \nThanks for joining in \n \u200b`,
+
+                    },
+                )
+                // .setImage("https://cubedhuang.com/images/alex-knight-unsplash.webp")
+                .setThumbnail(userImageUrl)
+                .setColor("#00b0f4")
+                .setFooter({
+                    text: "Brought to you by FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                })
+                .setTimestamp()
+
+                .setAuthor({
+                    name: "FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                });
+
+            await interaction.update({
+                // content: 'Thanks for joining the Heist!',
+                embeds: [gsEmbedEndedheist],
+                components: [gsRowDisabled]
+            });
+            const thanksEmbed = new EmbedBuilder()
+                .setAuthor({
+                    name: "FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                })
+                .setTitle("Thanks for joining!")
+                .setDescription("The current hoster has finished for the session. He will complete remaining until everyone reacted has been finished. No other reacts will be counted to be done. Positive things from all of you everday motivates us to do this everyday! The next Host will be in a couple hours stay tuned! If you want more then the one, <#1134405953836560515> are always available.\n\nThank you from FFTC Modder Team")
+                .setColor("#b30000")
+                .setFooter({
+                    text: "Brought to you by FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                });
+
+            await interaction.channel.send({ embeds: [thanksEmbed] });
+
+            let hWebhook = await getOrCreateWebhook(interaction.channel)
+
+            await hWebhook.send({
+                content: `Number of heist joiners in this session : ${joinerCount} \nThanks for joining in.`,
+                threadId: gsThreadId,
+            });
+            let threadChannel = await interaction.guild.channels.fetch(gsThreadId);
+            await threadChannel.setArchived(true);
+
+            // Close and lock the thread
+            // await threadChannel.setLocked(true);
+
+            let nextThreeEvents = getNextThreeEvents();
+
+            if (nextThreeEvents.length === 0) {
+                await interaction.channel.send('No upcoming events.');
+                return;
+            }
+            // console.log(nextThreeEvents)
+            let nextThreeEventsembed = new EmbedBuilder()
+                .setTitle('Next Three Sessions')
+                .setColor('#b30000')
+                .addFields(
+                    { name: nextThreeEvents[0].name, value: `<t:${nextThreeEvents[0].time}:R>` },
+                    { name: nextThreeEvents[1].name, value: `<t:${nextThreeEvents[1].time}:R>` },
+                    { name: nextThreeEvents[2].name, value: `<t:${nextThreeEvents[2].time}:R>` },
+                    // { name: '\u200B', value: '\u200B' },
+                )
+                .setAuthor({
+                    name: "FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                })
+                .setFooter({
+                    text: "Brought to you by FFTC Mods",
+                    iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
+                })
+
+            await interaction.channel.send({ embeds: [nextThreeEventsembed] });
+        }
+
+
+    }
     if (interaction.isButton() && interaction.customId.startsWith('endheist')) {
         let param = interaction.customId.replace('endheist ', '')
         param = param.split(' ')
@@ -1170,7 +1511,7 @@ client.on('interactionCreate', async (interaction) => {
             const cayoRowDisabled = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId('join')
+                        .setCustomId('joinheist')
                         .setEmoji('◀️')
                         .setLabel('Join Heist')
                         .setStyle(ButtonStyle.Secondary)
@@ -1189,6 +1530,7 @@ client.on('interactionCreate', async (interaction) => {
                         .setDisabled(true),
                 );
             const cayoEmbedEnded = interaction.message.embeds[0]
+            const joinerCount = await threadUserSchema.countDocuments({ threadId });
 
             timestampEnded = Math.floor(Date.now() / 1000);
             timestampEnded = `<t:${timestampEnded}:R>`
@@ -1207,7 +1549,7 @@ client.on('interactionCreate', async (interaction) => {
                     },
                     {
                         name: "***Heist Ended***",
-                        value: `Heist ended : ${timestampEnded} \nNumber of heist joiners in this session : ${joiners.length} \nThanks for joining in \n \u200b`,
+                        value: `Heist ended : ${timestampEnded} \nNumber of heist joiners in this session : ${joinerCount} \nThanks for joining in \n \u200b`,
 
                     },
                 )
@@ -1243,7 +1585,7 @@ client.on('interactionCreate', async (interaction) => {
             hWebhook = await getOrCreateWebhook(interaction.channel)
 
             await hWebHook.send({
-                content: `Number of heist joiners in this session : ${joiners.length} \nThanks for joining in.`,
+                content: `Number of heist joiners in this session : ${joinerCount} \nThanks for joining in.`,
                 threadId: heistThreadId,
             });
             // Retrieve the thread channel
@@ -1286,55 +1628,178 @@ client.on('interactionCreate', async (interaction) => {
         // dont know
     }
 
-    if (interaction.isButton() && interaction.customId.startsWith('join')) {
-        let param = interaction.customId.replace('join ', '')
+    if (interaction.isButton() && interaction.customId.startsWith('joincargs')) {
+        let param = interaction.customId.replace('joincargs ', '')
         param = param.split(' ')
-        heistThreadId = param[0]
-
+        gsThreadId = param[0]
+        threadId = gsThreadId
         hWebHook = await getOrCreateWebhook(interaction.channel)
         const user = interaction.user;
         const discordId = user.id;
 
-        if (joiners.includes(discordId)) {
-            // console.log(joiners)
-            await interaction.reply({
-                content: 'You have already joined the heist!',
-                ephemeral: true
-            });
-        } else {
-            await interaction.reply({
-                content: 'Joining the heist with your saved social club \nPlease send in-game friend request to the host',
-                ephemeral: true
-            });
-            try {
-                const doc = await scSchema.findOne({ discordId });
-                if (doc) {
+        try {
+            const existingJoining = await threadUserSchema.findOne({ discordId, threadId });
 
-                    const scUsername = doc.scUsername;
-                    if (!scUsername) {
-                        scUsername = `<@${discordId}`
-                    }
-                    joiners.push(discordId);
-                    await hWebHook.send({
-                        content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
-                        threadId: heistThreadId,
-                    });
-
-                } else {
-                    await hWebHook.send({
-                        content: `No Social Club username found for this Discord user : <@${discordId}> \n `,
-                        threadId: heistThreadId,
-                    });
-                }
-            } catch (error) {
-                console.error('Error retrieving data from MongoDB:', error);
+            if (existingJoining) {
                 await interaction.reply({
-                    content: 'Failed to retrieve Social Club username.',
-                    ephemeral: true
+                    content: "You have already joined this thread.",
+                    ephemeral: true,
                 });
+                return;
             }
+
+            const twentyFourHoursAgo = new Date();
+            twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+            const reason = "cargs";
+            const recentJoinings = await threadUserSchema.find({
+                discordId,
+                joinedAt: { $gte: twentyFourHoursAgo },
+                reason
+            }).distinct('threadId');
+
+            if (recentJoinings.length >= 2) {
+                await interaction.reply({
+                    content: "You have already joined two sessions within the last 24 hours.",
+                    ephemeral: true,
+                });
+                return;
+            }
+
+            const doc = await scSchema.findOne({ discordId });
+            let scUsername
+            if (doc) {
+                scUsername = doc.scUsername;
+                if (!scUsername) {
+                    scUsername = `<@${discordId}`
+                }
+            } else {
+                await interaction.reply({
+                    content: "Set your SC before joining the heist.",
+                    ephemeral: true,
+                });
+                return;
+            }
+            const newJoining = new threadUserSchema({ discordId, threadId, reason });
+            await newJoining.save();
+
+            await hWebHook.send({
+                content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
+                threadId: gsThreadId,
+            });
+
+            await interaction.reply({
+                content: `Joining the session with your saved social club : ${scUsername}\nPlease send in-game friend request to the host`,
+                ephemeral: true,
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
         }
     }
+
+    if (interaction.isButton() && interaction.customId.startsWith('joinheist')) {
+        let param = interaction.customId.replace('joinheist ', '')
+        param = param.split(' ')
+        heistThreadId = param[0]
+        threadId = heistThreadId
+        hWebHook = await getOrCreateWebhook(interaction.channel)
+        const user = interaction.user;
+        const discordId = user.id;
+
+        try {
+            const existingJoining = await threadUserSchema.findOne({ discordId, threadId });
+
+            if (existingJoining) {
+                await interaction.reply({
+                    content: "You have already joined this thread.",
+                    ephemeral: true,
+                });
+                return;
+            }
+
+            const doc = await scSchema.findOne({ discordId });
+            let scUsername
+            if (doc) {
+                scUsername = doc.scUsername;
+                if (!scUsername) {
+                    scUsername = `<@${discordId}`
+                }
+            } else {
+                await interaction.reply({
+                    content: "Set your SC before joining the heist.",
+                    ephemeral: true,
+                });
+                return;
+            }
+            const reason = "cayo"
+            const newJoining = new threadUserSchema({ discordId, threadId, reason });
+            await newJoining.save();
+
+            await hWebHook.send({
+                content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
+                threadId: heistThreadId,
+            });
+
+            await interaction.reply({
+                content: `Joining the heist with your saved social club : ${scUsername}\nPlease send in-game friend request to the host`,
+                ephemeral: true,
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // if (interaction.isButton() && interaction.customId.startsWith('joinheist')) {
+    //     let param = interaction.customId.replace('joinheist ', '')
+    //     param = param.split(' ')
+    //     heistThreadId = param[0]
+
+    //     hWebHook = await getOrCreateWebhook(interaction.channel)
+    //     const user = interaction.user;
+    //     const discordId = user.id;
+    //     const userSc = getsc(discordId)
+
+    //     if (joiners.includes(discordId)) {
+    //         // console.log(joiners)
+    //         await interaction.reply({
+    //             content: 'You have already joined the heist!',
+    //             ephemeral: true
+    //         });
+    //     } else {
+    //         await interaction.reply({
+    //             content: `Joining the heist with your saved social club : ${userSc}\nPlease send in-game friend request to the host`,
+    //             ephemeral: true
+    //         });
+    //         try {
+    //             const doc = await scSchema.findOne({ discordId });
+    //             if (doc) {
+
+    //                 const scUsername = doc.scUsername;
+    //                 if (!scUsername) {
+    //                     scUsername = `<@${discordId}`
+    //                 }
+    //                 joiners.push(discordId);
+    //                 await hWebHook.send({
+    //                     content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
+    //                     threadId: heistThreadId,
+    //                 });
+
+    //             } else {
+    //                 await hWebHook.send({
+    //                     content: `No Social Club username found for this Discord user : <@${discordId}> \n `,
+    //                     threadId: heistThreadId,
+    //                 });
+    //             }
+    //         } catch (error) {
+    //             console.error('Error retrieving data from MongoDB:', error);
+    //             await interaction.reply({
+    //                 content: 'Failed to retrieve Social Club username.',
+    //                 ephemeral: true
+    //             });
+    //         }
+    //     }
+    // }
 
     if (interaction.isButton() && interaction.customId.startsWith('accept5cars')) {
         let param = interaction.customId.replace('accept5cars ', '');
