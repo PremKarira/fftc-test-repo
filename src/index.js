@@ -1,9 +1,9 @@
-// require('dotenv').config();
-const keepAlive = require('./server');
+require('dotenv').config();
+// const keepAlive = require('./server');
 const mongo = require('./mongo');
-const scSchema = require('./schemas/sc');
-const modSchema = require('./schemas/mod');
-const { createCanvas, loadImage } = require('canvas');
+const scSchema = require('../schemas/sc');
+const modSchema = require('../schemas/mod');
+// const { createCanvas, loadImage } = require('canvas');
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
 const { MessageActionRow, MessageButton, Attachment, ActionRowBuilder } = require('discord.js');
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
@@ -658,10 +658,6 @@ client.on("messageCreate", async (message) => {
                 name: "FFTC Mods",
                 iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
             })
-        // .setFooter({
-        //     text: "Brought to you by FFTC Mods",
-        //     iconURL: "https://media.discordapp.net/attachments/1099602135752130560/1099603282206392384/FFTC_logo.png",
-        // });
         const scRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
@@ -1181,6 +1177,6 @@ client.on('interactionCreate', async (interaction) => {
     }
 })
 
-keepAlive()
+// keepAlive()
 // const mySecret = process.env['TOKEN']
 // client.login(mySecret)
