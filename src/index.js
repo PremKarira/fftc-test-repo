@@ -1153,6 +1153,14 @@ client.on("messageCreate", async (message) => {
                     name: "??ts [Time left (in minutes)]",
                     value: `(modders' only command)\nCheck timestamp working or not for Cayo Perico heist \n \u200b`,
                 },
+                {
+                    name: "??cargift5",
+                    value: `(modders' only command)\nGenerates embed for Monthly car gifting session \n \u200b`,
+                },
+                {
+                    name: "??giftsession [Time left (in minutes)]",
+                    value: `(modders' only command)\nGenerates embed for Daily car gifting session\nUsers can join twice per day \u200b`,
+                },
             )
             // .setImage("https://cubedhuang.com/images/alex-knight-unsplash.webp")
             // .setThumbnail("https://dan.onl/images/emptysong.jpg")
