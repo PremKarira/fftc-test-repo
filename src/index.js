@@ -7,7 +7,7 @@ const joinerSchema = require('../schemas/joiner');
 // const { createCanvas, loadImage } = require('canvas');
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionBitField, Permissions } = require('discord.js');
 const { MessageActionRow, MessageButton, Attachment, ActionRowBuilder } = require('discord.js');
-const { ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
+const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ChannelType } = require('discord.js');
 const { Events, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -990,7 +990,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (interaction.isModalSubmit() && interaction.customId === 'cars5modal') {
         const discordId = interaction.user.id;
-    
+
         try {
             const scUsername = await getsc(discordId);
             const cars1by5 = interaction.fields.getTextInputValue('c1Input');
@@ -998,10 +998,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
             const cars3by5 = interaction.fields.getTextInputValue('c3Input');
             const cars4by5 = interaction.fields.getTextInputValue('c4Input');
             const cars5by5 = interaction.fields.getTextInputValue('c5Input');
-            
+
             const joiner = await joinerSchema.findOne({ interactionId: interaction.message.id });
             let replyContent = '';
-    
+
             if (joiner && joiner.joinedUsersId.includes(discordId)) {
                 replyContent = "You have already joined this interaction.";
             } else {
@@ -1009,32 +1009,63 @@ client.on(Events.InteractionCreate, async (interaction) => {
                     interactionId: interaction.message.id,
                     joinedUsersId: []
                 });
-    
+
                 newJoiner.joinedUsersId.push(discordId);
                 await newJoiner.save();
-    
+
                 hWebHook = await getOrCreateWebhook(interaction.channel);
-    
-                const user = await interaction.client.users.fetch(interaction.user.id);
-                const userImageUrl = user.displayAvatarURL({ format: 'png', dynamic: true });
-    
-                const carsMessage = `Social Club username: ${scUsername}\n\n` +
+
+                // const user = await interaction.client.users.fetch(interaction.user.id);
+                // const userImageUrl = user.displayAvatarURL({ format: 'png', dynamic: true });
+
+                // const carsMessage = `Social Club username: ${scUsername}\n\n` +
+                //     `Cars:\n` +
+                //     `1. ${cars1by5}\n` +
+                //     `2. ${cars2by5}\n` +
+                //     `3. ${cars3by5}\n` +
+                //     `4. ${cars4by5}\n` +
+                //     `5. ${cars5by5}`;
+
+                // await hWebHook.send({
+                //     content: carsMessage,
+                //     username: user.username,
+                //     avatarURL: userImageUrl,
+                // });
+
+                const carsMessage = `Discord Tag : <@${discordId}> \n` +
+                    `Discord id : ${discordId} \n` +
+                    `Social Club username: ${scUsername}\n\n` +
                     `Cars:\n` +
                     `1. ${cars1by5}\n` +
                     `2. ${cars2by5}\n` +
                     `3. ${cars3by5}\n` +
                     `4. ${cars4by5}\n` +
                     `5. ${cars5by5}`;
-    
-                await hWebHook.send({
+
+                const carsRow = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId(`accept5cars ${discordId}`)
+                            .setEmoji('⌛')
+                            .setLabel('Status : To be accepted by Modders')
+                            .setStyle(ButtonStyle.Secondary),
+                    );
+
+                const sentMessage = await interaction.channel.send({
                     content: carsMessage,
-                    username: user.username,
-                    avatarURL: userImageUrl,
+                    components: [carsRow]
                 });
-    
+
+
+                // sentMessage.edit({
+                //     components: [Row]
+                // }).catch(error => {
+                //     console.error('Error editing message with buttons:', error);
+                // });
+
                 replyContent = "Entered Successfully!";
             }
-    
+
             await interaction.reply({
                 content: replyContent,
                 ephemeral: true,
@@ -1302,6 +1333,86 @@ client.on('interactionCreate', async (interaction) => {
                     ephemeral: true
                 });
             }
+        }
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith('accept5cars')) {
+        let param = interaction.customId.replace('accept5cars ', '');
+        param = param.split(' ');
+        discordId = param[0];
+
+        try {
+            if (!modders.includes(interaction.user.id)) {
+                await interaction.reply({
+                    content: 'Only modders can accept this request!',
+                    ephemeral: true
+                });
+            } else {
+                const carthread = await interaction.message.startThread({
+                    name: 'Car gifting',
+                    autoArchiveDuration: 60,
+                    reason: `car gifting for discord id : ${discordId}`,
+                    type: ChannelType.PrivateThread
+                });
+                await carthread.setLocked(true);
+                await carthread.members.add(discordId);
+                await carthread.members.add(interaction.user.id);
+
+                const carsRow = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId(`progress5cars ${discordId} ${interaction.user.id} ${carthread.id}`)
+                            .setEmoji('⚠')
+                            .setLabel(`Status : In progress`)
+                            .setStyle(ButtonStyle.Secondary),
+                    );
+
+                const originalContent = interaction.message.content;
+
+                const tempContent = originalContent + `\nAccepted by Modder : <@${interaction.user.id}>`;
+                await interaction.update({
+                    content: tempContent,
+                    components: [carsRow]
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith('progress5cars')) {
+        let param = interaction.customId.replace('progress5cars ', '')
+        param = param.split(' ')
+        discordId = param[0]
+        hostId = param[1]
+        threadId = param[2]
+        if (!modders.includes(interaction.user.id)) {
+            await interaction.reply({
+                content: 'Only modders can end this request!',
+                ephemeral: true
+            });
+        } else {
+
+            let threadChannel = await interaction.guild.channels.fetch(threadId);
+
+            await threadChannel.members.remove(discordId);
+            await threadChannel.members.remove(hostId);
+            await threadChannel.setArchived(true);
+
+            const carsRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`progress5cars ${discordId}`)
+                        .setEmoji('✅')
+                        .setLabel('Status : Completed Successfully')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(true),
+                );
+            interaction.update({
+                components: [carsRow]
+            })
+                .catch(console.error);
+
         }
     }
 })
