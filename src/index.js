@@ -1689,10 +1689,14 @@ client.on('interactionCreate', async (interaction) => {
             }
             const newJoining = new threadUserSchema({ discordId, threadId, reason });
             await newJoining.save();
+            const user = await interaction.client.users.fetch(discordId);
+            const userImageUrl = user.displayAvatarURL({ format: 'png', dynamic: true });
 
             await hWebHook.send({
                 content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
                 threadId: gsThreadId,
+                username: user.username,
+                avatarURL: userImageUrl,
             });
 
             await interaction.reply({
@@ -1742,10 +1746,14 @@ client.on('interactionCreate', async (interaction) => {
             const reason = "cayo"
             const newJoining = new threadUserSchema({ discordId, threadId, reason });
             await newJoining.save();
+            const user = await interaction.client.users.fetch(discordId);
+            const userImageUrl = user.displayAvatarURL({ format: 'png', dynamic: true });
 
             await hWebHook.send({
                 content: `Discord Tag : <@${discordId}> \nDiscord id : ${discordId} \nSocial Club : ${scUsername} \n `,
                 threadId: heistThreadId,
+                username: user.username,
+                avatarURL: userImageUrl,
             });
 
             await interaction.reply({
