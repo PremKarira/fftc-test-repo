@@ -310,6 +310,13 @@ client.on("messageCreate", async (message) => {
     // if (message.content.startsWith("??pingevent") && 0 && message.author.id === '428902961847205899') {
     //   message.channel.send(`Hello <@&1018002197096706119> \n<@733198557691117601> and <@844543656589000785> are hosting a mini game \nand whoever wins gets 2x instant. \nSo make sure you react to this message if you wanna join.`)
     // }
+  
+    if (message.content.toLowerCase() === "??delete" && message.author.id === "428902961847205899") {
+      const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+            if (repliedMessage) {
+                await repliedMessage.delete();
+            }
+    }
 
     // if (message.content.startsWith('??editThumbnail') && message.author.id === '428902961847205899') {
     //       const repliedMessage = message.reference?.messageId
@@ -844,7 +851,7 @@ client.on("messageCreate", async (message) => {
                 //     .setEmoji('🔗')
                 //     .setStyle(ButtonStyle.Link),
             );
-        message.channel.send({ embeds: [cgEmbed], components: [cgRow] });
+            message.channel.send({ content: `<@&1018002197096706119>`,embeds: [cgEmbed], components: [cgRow] });
     }
 
     // if (message.content.toLowerCase() === "??giftsession" && message.author.id === "428902961847205899") {
@@ -909,7 +916,7 @@ client.on("messageCreate", async (message) => {
 
 
         const gsSentMessage = await message.channel.send({
-            content: `Hello RoleTag, <@${host}> will be hosting this gifting session`,
+            content: `Hello <@&1018002197096706119>, <@${host}> will be hosting this gifting session`,
             embeds: [gsEmbed],
         });
         const gsThreadPromise = gsSentMessage.startThread({
@@ -1362,9 +1369,10 @@ client.on('interactionCreate', async (interaction) => {
         param = param.split(' ')
         host = param[0]
         gsThreadId = param[1]
+        threadId = gsThreadId
         if (interaction.user.id !== host) {
             await interaction.reply({
-                content: 'Only the host can end this Heist!',
+                content: 'Only the host can end this!',
                 ephemeral: true
             });
         } else {
@@ -1393,7 +1401,7 @@ client.on('interactionCreate', async (interaction) => {
                         .setDisabled(true),
                 );
             const gsEmbedEnded = interaction.message.embeds[0]
-            const joinerCount = await threadUserSchema.countDocuments({ gsThreadId });
+            const joinerCount = await threadUserSchema.countDocuments({ threadId });
 
             timestampEnded = Math.floor(Date.now() / 1000);
             timestampEnded = `<t:${timestampEnded}:R>`
@@ -1453,7 +1461,7 @@ client.on('interactionCreate', async (interaction) => {
             let hWebhook = await getOrCreateWebhook(interaction.channel)
 
             await hWebhook.send({
-                content: `Number of heist joiners in this session : ${joinerCount} \nThanks for joining in.`,
+                content: `Number of joiners in this session : ${joinerCount} \nThanks for joining in.`,
                 threadId: gsThreadId,
             });
             let threadChannel = await interaction.guild.channels.fetch(gsThreadId);
@@ -1497,6 +1505,7 @@ client.on('interactionCreate', async (interaction) => {
         param = param.split(' ')
         host = param[0]
         heistThreadId = param[1]
+        threadId = heistThreadId
         // console.log(heistThreadId)
         // host="380395559921385473"
         if (interaction.user.id !== host) {
